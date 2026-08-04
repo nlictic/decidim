@@ -16,11 +16,12 @@ describe Decidim::Debates::Admin::UpdateDebate do
   end
   let(:comments_layout) { "two_columns" }
   let(:description) { { en: "description" } }
+  let(:title) { { en: "title" } }
   let(:form) do
     double(
       invalid?: invalid,
       current_user: user,
-      title: { en: "title" },
+      title:,
       description:,
       information_updates: { en: "information_updates" },
       instructions: { en: "instructions" },
@@ -64,6 +65,18 @@ describe Decidim::Debates::Admin::UpdateDebate do
         subject.call
 
         expect(debate.description.values.join(" ")).to include(mentioned_user.to_global_id.to_s)
+      end
+    end
+
+    context "when title has a user mention" do
+      let(:mentioned_user) { create(:user, :confirmed, organization:) }
+      let(:title) { { en: "title mentioning @#{mentioned_user.nickname}" } }
+
+      it "does not rewrite the mention to the mentioned user GID" do
+        subject.call
+
+        expect(debate.title.values.join(" ")).not_to include(mentioned_user.to_global_id.to_s)
+        expect(debate.title.values.join(" ")).to include("@#{mentioned_user.nickname}")
       end
     end
 

@@ -33,10 +33,11 @@ describe Decidim::Proposals::Admin::UpdateProposal do
 
   describe "call" do
     let(:body) { { en: "A reasonable proposal body" } }
+    let(:title) { { en: "A reasonable proposal title" } }
 
     let(:form_params) do
       {
-        title: { en: "A reasonable proposal title" },
+        title:,
         body:,
         address:,
         has_address:,
@@ -88,6 +89,19 @@ describe Decidim::Proposals::Admin::UpdateProposal do
         action_log = Decidim::ActionLog.last
         expect(action_log.version).to be_present
         expect(action_log.version.event).to eq "update"
+      end
+
+      context "when title has a user mention" do
+        let(:mentioned_user) { create(:user, :confirmed, organization:) }
+        let(:title) { { en: "A reasonable title mentioning @#{mentioned_user.nickname}" } }
+
+        it "does not rewrite the mention to the mentioned user GID" do
+          command.call
+          proposal.reload
+
+          expect(proposal.title.values.join(" ")).not_to include(mentioned_user.to_global_id.to_s)
+          expect(proposal.title.values.join(" ")).to include("@#{mentioned_user.nickname}")
+        end
       end
 
       context "when body has a user mention" do
