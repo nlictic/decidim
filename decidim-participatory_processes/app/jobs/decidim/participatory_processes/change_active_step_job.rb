@@ -19,16 +19,38 @@ module Decidim
             next_step = process.steps.where(start_date: ..Time.zone.now.to_date).find_by(position: next_position)
             if next_step.present?
               active_step.update(active: false)
-              next_step.update(active: true)
+              activate_step(next_step, process.organization)
             end
           else
             step_to_activate = steps.first
             if active_step != step_to_activate
               active_step&.update(active: false)
-              step_to_activate.update(active: true)
+              activate_step(step_to_activate, process.organization)
             end
           end
         end
+      end
+
+      private
+
+      def activate_step(step, organization)
+        admin = admin_user(organization)
+        return step.update!(active: true) if admin.blank?
+
+        Decidim.traceability.perform_action!(
+          :activate,
+          step,
+          admin,
+          details: {
+            automatic_action: true
+          }
+        ) do
+          step.update!(active: true)
+        end
+      end
+
+      def admin_user(organization)
+        Decidim::User.where(organization:, admin: true).confirmed.first
       end
     end
   end
