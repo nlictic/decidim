@@ -16,6 +16,7 @@ gem "decidim-templates", path: "."
 
 gem "bootsnap", "~> 1.25"
 
+gem "local_time"
 gem "puma", ">= 6.3.1"
 
 group :development, :test do

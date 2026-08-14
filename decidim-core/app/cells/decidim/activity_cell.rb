@@ -7,6 +7,7 @@ module Decidim
   # tweak the necessary methods (usually `title` is enough).
   class ActivityCell < Decidim::ViewModel
     include Cell::ViewModel::Partial
+    include LocalTimeHelper
 
     def show
       return unless renderable?
@@ -83,7 +84,11 @@ module Decidim
     end
 
     def created_at
-      t("decidim.activity.time_ago", time: time_ago_in_words(model.created_at))
+      model.created_at
+    end
+
+    def notification_time
+      local_time_ago(created_at)
     end
 
     def user
